@@ -9,11 +9,9 @@ from utils.utils import *
 from model.AnomalyTransformer import AnomalyTransformer
 from data_factory.data_loader import get_loader_segment
 
-
 def my_kl_loss(p, q):
     res = p * (torch.log(p + 0.0001) - torch.log(q + 0.0001))
     return torch.mean(torch.sum(res, dim=-1), dim=1)
-
 
 def adjust_learning_rate(optimizer, epoch, lr_):
     lr_adjust = {epoch: lr_ * (0.5 ** ((epoch - 1) // 1))}
@@ -22,7 +20,6 @@ def adjust_learning_rate(optimizer, epoch, lr_):
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
         print('Updating learning rate to {}'.format(lr))
-
 
 class EarlyStopping:
     def __init__(self, patience=7, verbose=False, dataset_name='', delta=0):
@@ -129,9 +126,7 @@ class Solver(object):
         return np.average(loss_1), np.average(loss_2)
 
     def train(self):
-
         print("======================TRAIN MODE======================")
-
         time_now = time.time()
         path = self.model_save_path
         if not os.path.exists(path):
@@ -219,7 +214,11 @@ class Solver(object):
 
         # (1) stastic on the train set
         attens_energy = []
-        for i, (input_data, labels) in enumerate(self.train_loader):
+        #for epoch in tqdm(list(range(self.num_epochs))):
+        #for epoch in range(self.num_epochs):        
+        #for i, (input_data, labels) in enumerate(self.train_loader):
+
+        for i, (input_data, labels) in tqdm(list(enumerate(self.train_loader))):        
             input = input_data.float().to(self.device)
             output, series, prior, _ = self.model(input)
             loss = torch.mean(criterion(input, output), dim=-1)
@@ -253,7 +252,8 @@ class Solver(object):
 
         # (2) find the threshold
         attens_energy = []
-        for i, (input_data, labels) in enumerate(self.thre_loader):
+        #for i, (input_data, labels) in enumerate(self.thre_loader):
+        for i, (input_data, labels) in tqdm(list(enumerate(self.thre_loader))):
             input = input_data.float().to(self.device)
             output, series, prior, _ = self.model(input)
 
@@ -366,6 +366,7 @@ class Solver(object):
 
         from sklearn.metrics import precision_recall_fscore_support
         from sklearn.metrics import accuracy_score
+
         accuracy = accuracy_score(gt, pred)
         precision, recall, f_score, support = precision_recall_fscore_support(gt, pred,
                                                                               average='binary')
